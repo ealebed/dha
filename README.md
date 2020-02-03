@@ -13,7 +13,7 @@ cd dha
 ```
 
 ```bash
-go build
+go build -v ./ 
 ```
 
 ## Set your dockerhub login/password as env-variables

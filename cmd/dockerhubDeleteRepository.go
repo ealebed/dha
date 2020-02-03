@@ -44,7 +44,7 @@ func NewDockerhubDeleteRepositoryCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&options.imageName, "image", "", "docker image name for delete")
+	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for delete")
 	cmd.MarkFlagRequired("image")
 
 	return cmd

@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"io"
+	"os"
 
 	"github.com/ealebed/dha/cmd/version"
 	"github.com/spf13/cobra"
@@ -45,7 +46,7 @@ func NewCmdRoot(out io.Writer) *cobra.Command {
 		Version:       version.String(),
 	}
 
-	cmd.PersistentFlags().StringVar(&options.organization, "org", "ealebed", "repository source owner (user/organization)")
+	cmd.PersistentFlags().StringVar(&options.organization, "org", os.Getenv("DOCKERHUB_USERNAME"), "repository source owner (user/organization)")
 	cmd.PersistentFlags().BoolVar(&options.dryRun, "dry-run", true, "print output only")
 
 	// create subcommands

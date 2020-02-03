@@ -45,7 +45,7 @@ func NewDockerhubListTagsCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&options.imageName, "image", "", "docker image name for getting tags")
+	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for getting tags")
 	cmd.MarkFlagRequired("image")
 
 	return cmd

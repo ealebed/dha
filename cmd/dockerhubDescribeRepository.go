@@ -43,7 +43,7 @@ func NewDockerhubDescribeRepositoryCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&options.imageName, "image", "", "docker image name for getting information")
+	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for getting information")
 	cmd.MarkFlagRequired("image")
 
 	return cmd

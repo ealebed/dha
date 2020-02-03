@@ -47,7 +47,7 @@ func NewDockerhubTruncateTagsCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&options.imageName, "image", "", "docker image name for truncating tags")
+	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for truncating tags")
 	cmd.Flags().BoolVar(&options.truncateOldTags, "truncateOld", false, "truncate old image tags (all tags, except latest 20 ones)")
 	cmd.Flags().StringVar(&options.imageTagRegex, "regEx", "", "truncate image tags, matching specified regular expression string")
 	cmd.MarkFlagRequired("image")
