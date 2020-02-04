@@ -35,7 +35,7 @@ export DOCKERHUB_PASSWORD=
 Use the following syntax to run `dha` commands from your terminal window:
 
 ```bash
-dha [command] [subcommand] [flags]
+dha [command] [flags]
 ```
 
 ### Flags are
@@ -43,7 +43,7 @@ dha [command] [subcommand] [flags]
 | flag | Description |
 | ----------- | ------------ |
 | `--dry-run` | bool; print output only (default true) |
-| `--org` | string; source owner user/organization (default "ealebed") |
+| `--org` | string; source owner user/organization (default "DOCKERHUB_USERNAME") |
 | `--version` | dha version |
 
 ### Commands are
@@ -51,7 +51,7 @@ dha [command] [subcommand] [flags]
 | command | Description |
 | ----------- | ------------ |
 | `delete`, `del` | delete the specified dockerhub repository |
-| `desribe` | returns information about the specified dockerhub repository |
+| `describe` | returns information about the specified dockerhub repository |
 | `get` | returns list tags from the specified dockerhub repository |
 | `list`, `ls` | returns list of all dockeruhub repositories |
 | `truncate` | truncate tags in the specified docker image repository |
@@ -65,6 +65,9 @@ dha [command] [subcommand] [flags]
 
 # List all image repositories from DockerHub.
 ./dha list
+
+# Get detailed information about the specified docker image repository on DockerHub.
+./dha describe --image=airflow
 
 # Get tags from the specified docker image repository on DockerHub.
 ./dha get --image=airflow
