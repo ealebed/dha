@@ -63,7 +63,7 @@ dha [command] [flags]
 # Delete the specified docker image repository from DockerHub.
 ./dha delete --image=airflow --dry-run=false
 
-# List all image repositories from DockerHub.
+# List all image repositories (and count tags in square brackets) from DockerHub.
 ./dha list
 
 # Get detailed information about the specified docker image repository on DockerHub.

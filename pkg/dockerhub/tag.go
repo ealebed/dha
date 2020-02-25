@@ -70,6 +70,26 @@ func (c *Client) listTagsRequest(image, next string) (*TagList, error) {
 	return output, nil
 }
 
+// GetTagsCount returns count docker image tag from docker hub for selected repository
+func (c *Client) GetTagsCount(image string) (int, error) {
+	url := fmt.Sprintf("%s/%s/%s/tags/?page_size=100", RepositoriesURL, c.ORG, image)
+
+	data, _, err := c.doRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return -1, err
+	}
+
+	output := &TagList{}
+
+	if err = json.NewDecoder(bytes.NewReader(data)).Decode(output); err != nil {
+		return -1, err
+	}
+
+	tagsCount := output.Count
+
+	return tagsCount, nil
+}
+
 // deleteDockerImageTag delete docker image tag from docker hub
 /* curl \
    -H "Authorization: JWT ${TOKEN}" \

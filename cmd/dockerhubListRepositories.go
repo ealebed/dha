@@ -55,7 +55,12 @@ func listDockerhubRepos(flags *pflag.FlagSet) {
 		color.Red("Error: %s", err)
 	}
 
-	for count, repo := range repositories {
-		fmt.Printf("Image %d - %s\n", count, repo.Name)
+	for repoCount, repo := range repositories {
+		tagsCount, err := dockerhub.NewClient(org, "").GetTagsCount(repo.Name)
+		if err != nil {
+			color.Red("Error: %s", err)
+		}
+
+		fmt.Printf("| Image %-6d| %-40s | [%d]\n", repoCount, repo.Name, tagsCount)
 	}
 }
