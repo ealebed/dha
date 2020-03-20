@@ -17,8 +17,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -61,6 +59,12 @@ func listDockerhubRepos(flags *pflag.FlagSet) {
 			color.Red("Error: %s", err)
 		}
 
-		fmt.Printf("| Image %-6d| %-40s | [%d]\n", repoCount, repo.Name, tagsCount)
+		if tagsCount == 0 {
+			color.Red("| Image %-6d| %-40s | [%d]\n", repoCount, repo.Name, tagsCount)
+		} else if tagsCount >= 50 {
+			color.Yellow("| Image %-6d| %-40s | [%d]\n", repoCount, repo.Name, tagsCount)
+		} else {
+			color.White("| Image %-6d| %-40s | [%d]\n", repoCount, repo.Name, tagsCount)
+		}
 	}
 }
