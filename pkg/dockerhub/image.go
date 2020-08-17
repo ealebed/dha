@@ -36,7 +36,7 @@ func (c *Client) RenewDockerImage(image string) error {
 	for _, tag := range tags {
 		imageReference := c.ORG + "/" + image + ":" + tag.Name
 		if !validTag.MatchString(tag.Name) {
-			color.Yellow("	Skip %s", imageReference)
+			color.Yellow("	Skip %s - invalid tag", imageReference)
 		} else {
 			lastUpdatedAt := tag.LastUpdated.In(loc)
 
@@ -45,6 +45,8 @@ func (c *Client) RenewDockerImage(image string) error {
 				commandPull(imageReference)
 				commandPush(imageReference)
 				commandRmi(imageReference)
+			} else {
+				color.Yellow("	Skip %s - tag newer than %v hours", imageReference, expiredRange.Hours())
 			}
 		}
 	}

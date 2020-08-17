@@ -76,7 +76,7 @@ func renewImageTags(flags *pflag.FlagSet, image string, allImages bool) error {
 				color.Red("Error: %s", err)
 			}
 			for repoCount, repo := range repositories {
-				color.Blue("Processing repo %d: %s", repoCount, org+"/"+repo.Name)
+				color.Blue("Processing docker image repository %d: %s", repoCount, org+"/"+repo.Name)
 				dockerhub.NewClient(org, "").RenewDockerImage(repo.Name)
 			}
 		} else {
