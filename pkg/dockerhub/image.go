@@ -36,13 +36,12 @@ func (c *Client) RenewDockerImage(image string) error {
 	for _, tag := range tags {
 		imageReference := c.ORG + "/" + image + ":" + tag.Name
 		if !validTag.MatchString(tag.Name) {
-			color.Yellow("Skip %s", imageReference)
+			color.Yellow("	Skip %s", imageReference)
 		} else {
 			lastUpdatedAt := tag.LastUpdated.In(loc)
 
 			diff := currentTime.Sub(lastUpdatedAt)
 			if diff.Hours() > expiredRange.Hours() {
-
 				commandPull(imageReference)
 				commandPush(imageReference)
 				commandRmi(imageReference)
@@ -55,7 +54,7 @@ func (c *Client) RenewDockerImage(image string) error {
 
 // helper function to create the `docker pull` command.
 func commandPull(imageReference string) {
-	color.Green("Pulling from dockereHub %s", imageReference)
+	color.Green("	Pulling from dockereHub %s", imageReference)
 	exec.Command("docker", "pull", imageReference).Run()
 
 	// debug
@@ -70,12 +69,12 @@ func commandPull(imageReference string) {
 
 // helper function to create the `docker push` command.
 func commandPush(imageReference string) {
-	color.Green("Pushishg to dockerHub %s", imageReference)
+	color.Green("	Pushishg to dockerHub %s", imageReference)
 	exec.Command("docker", "push", imageReference).Run()
 }
 
 // helper function to create the `docker image rm` command.
 func commandRmi(imageReference string) {
-	color.Green("Removing from localhost %s", imageReference)
+	color.Green("	Removing from localhost %s", imageReference)
 	exec.Command("docker", "image", "rm", imageReference).Run()
 }
