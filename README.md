@@ -13,7 +13,7 @@ cd dha
 ```
 
 ```bash
-go build -v ./ 
+go install github.com/ealebed/dha
 ```
 
 ## Set your dockerhub login/password as env-variables
@@ -25,7 +25,7 @@ export DOCKERHUB_PASSWORD=
 ## Use
 
 ```bash
-./dha -h
+dha -h
 ```
 
 ---
@@ -61,20 +61,26 @@ dha [command] [flags]
 
 ```bash
 # Delete the specified docker image repository from DockerHub.
-./dha delete --image=airflow --dry-run=false
+dha delete --image=airflow --dry-run=false
 
 # List all image repositories (and count tags in square brackets) from DockerHub.
-./dha list
+dha list
 
 # Get detailed information about the specified docker image repository on DockerHub.
-./dha describe --image=airflow
+dha describe --image=airflow
 
 # Get tags from the specified docker image repository on DockerHub.
-./dha get --image=airflow
+dha get --image=airflow
 
 # Truncate old tags (except latest 20 ones) in the specified docker image repository on DockerHub.
-./dha truncate --image=airflow --truncateOld=true --dry-run=false
+dha truncate --image=airflow --truncateOld=true --dry-run=false
 
 # Truncate tags in the specified docker image repository on DockerHub by regEx.
-./dha truncate --image=airflow --regEx=dev --dry-run=false
+dha truncate --image=airflow --regEx=dev --dry-run=false
+
+# Renew (pull/push) tags in the specified docker image repository on DockerHub.
+dha renew --image=sentinel-dashboard --dry-run=false
+
+# Renew (pull/push) tags in all organization repositories on DockerHub.
+dha renew --all --dry-run=false
 ```

@@ -54,6 +54,7 @@ func NewCmdRoot(out io.Writer) *cobra.Command {
 	cmd.AddCommand(NewDockerhubDescribeRepositoryCmd())
 	cmd.AddCommand(NewDockerhubListRepositoriesCmd())
 	cmd.AddCommand(NewDockerhubListTagsCmd())
+	cmd.AddCommand(NewDockerhubRenewTagsCmd())
 	cmd.AddCommand(NewDockerhubTruncateTagsCmd())
 
 	return cmd
