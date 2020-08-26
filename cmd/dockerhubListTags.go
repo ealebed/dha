@@ -64,7 +64,7 @@ func listImageTags(flags *pflag.FlagSet, image string) error {
 	}
 
 	for count, tag := range tags {
-		fmt.Printf("| Tag %-6d| %-40s\n", count, tag.Name)
+		fmt.Printf("| Tag %-6d| %-40s\n", count+1, tag.Name)
 	}
 
 	return nil

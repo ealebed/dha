@@ -54,6 +54,9 @@ func NewDockerhubRenewTagsCmd() *cobra.Command {
 
 // renewImageTags renew tags from the provided dockerhub repository (image)
 func renewImageTags(flags *pflag.FlagSet, image string, allImages bool) error {
+	boldGreen := color.New(color.FgGreen, color.Bold).SprintFunc()
+	boldWhite := color.New(color.FgWhite, color.Bold).SprintFunc()
+
 	org, err := flags.GetString("org")
 	if err != nil {
 		color.Red("Error: %s", err)
@@ -65,7 +68,7 @@ func renewImageTags(flags *pflag.FlagSet, image string, allImages bool) error {
 	}
 
 	if dryRun {
-		color.Yellow("[DRY-RUN] Renewing tags for docker image repository: %s/%s", org, image)
+		color.Yellow("[DRY-RUN] Renewing tags for docker image repository: %s/%s", boldWhite(org), boldWhite(image))
 	} else {
 		if !allImages && image == "" {
 			color.Red("You should provide image or set flag --all")
@@ -76,7 +79,7 @@ func renewImageTags(flags *pflag.FlagSet, image string, allImages bool) error {
 				color.Red("Error: %s", err)
 			}
 			for repoCount, repo := range repositories {
-				color.Blue("Processing docker image repository %d: %s", repoCount, org+"/"+repo.Name)
+				color.Blue("===> %s %s %s/%s ", boldWhite("Processing docker image repository"), boldGreen(org+"/"+repo.Name), boldWhite(repoCount+1), boldWhite(len(repositories)))
 				dockerhub.NewClient(org, "").RenewDockerImage(repo.Name)
 			}
 		} else {

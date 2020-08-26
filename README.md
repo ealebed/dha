@@ -72,11 +72,14 @@ dha describe --image=airflow
 # Get tags from the specified docker image repository on DockerHub.
 dha get --image=airflow
 
-# Truncate old tags (except latest 20 ones) in the specified docker image repository on DockerHub.
+# Truncate old tags (except latest 30 ones) in the specified docker image repository on DockerHub.
 dha truncate --image=airflow --truncateOld=true --dry-run=false
 
 # Truncate tags in the specified docker image repository on DockerHub by regEx.
 dha truncate --image=airflow --regEx=dev --dry-run=false
+
+# Truncate tags in all docker image repositories on DockerHub by regEx.
+dha truncate --all --regEx=cron --dry-run=false
 
 # Renew (pull/push) tags in the specified docker image repository on DockerHub.
 dha renew --image=sentinel-dashboard --dry-run=false

@@ -60,11 +60,11 @@ func listDockerhubRepos(flags *pflag.FlagSet) {
 		}
 
 		if tagsCount == 0 {
-			color.Red("| Image %-6d| %-40s | [%d]\n", repoCount, repo.Name, tagsCount)
+			color.Red("| Image %-6d| %-40s | [%d]\n", repoCount+1, repo.Name, tagsCount)
 		} else if tagsCount >= 50 {
-			color.Yellow("| Image %-6d| %-40s | [%d]\n", repoCount, repo.Name, tagsCount)
+			color.Yellow("| Image %-6d| %-40s | [%d]\n", repoCount+1, repo.Name, tagsCount)
 		} else {
-			color.White("| Image %-6d| %-40s | [%d]\n", repoCount, repo.Name, tagsCount)
+			color.White("| Image %-6d| %-40s | [%d]\n", repoCount+1, repo.Name, tagsCount)
 		}
 	}
 }

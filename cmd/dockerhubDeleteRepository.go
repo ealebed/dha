@@ -52,6 +52,9 @@ func NewDockerhubDeleteRepositoryCmd() *cobra.Command {
 
 // deleteRepository deletes docker repository
 func deleteRepository(flags *pflag.FlagSet, image string) error {
+	boldGreen := color.New(color.FgGreen, color.Bold).SprintFunc()
+	boldWhite := color.New(color.FgWhite, color.Bold).SprintFunc()
+
 	org, err := flags.GetString("org")
 	if err != nil {
 		color.Red("Error: %s", err)
@@ -63,8 +66,9 @@ func deleteRepository(flags *pflag.FlagSet, image string) error {
 	}
 
 	if dryRun {
-		color.Yellow("[DRY-RUN] Delete docker image repository: %s/%s", org, image)
+		color.Yellow("[DRY-RUN] Delete docker image repository: %s/%s", boldWhite(org), boldWhite(image))
 	} else {
+		color.Blue("===> %s %s", boldWhite("Deleting docker image repository"), boldGreen(org+"/"+image))
 		dockerhub.NewClient(org, "").DeleteRepository(image)
 	}
 
