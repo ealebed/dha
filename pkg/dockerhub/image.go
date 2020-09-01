@@ -74,7 +74,7 @@ func commandPull(imageReference string) {
 
 // helper function to create the `docker push` command.
 func commandPush(imageReference string) {
-	color.Green("	==> Pushishg to dockerHub %s", imageReference)
+	color.Green("	==> Pushing to dockerHub %s", imageReference)
 	exec.Command("docker", "push", imageReference).Run()
 }
 
