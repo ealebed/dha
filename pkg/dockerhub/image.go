@@ -33,7 +33,7 @@ func (c *Client) RenewDockerImage(image string) error {
 
 	loc, _ := time.LoadLocation("UTC")
 	currentTime := time.Now().In(loc)
-	expiredRange := (time.Hour * 24 * 30)
+	expiredRange := (time.Hour * 24 * 20)
 	validTag := regexp.MustCompile(`^\d{2}\.\d{2}\.\d{2}\-\d{2}\.\d{2}$`)
 
 	for _, tag := range tags {
@@ -59,7 +59,7 @@ func (c *Client) RenewDockerImage(image string) error {
 
 // helper function to create the `docker pull` command.
 func commandPull(imageReference string) {
-	color.Green("	Pulling from dockereHub %s", imageReference)
+	color.Green("	<== Pulling from dockerHub %s", imageReference)
 	exec.Command("docker", "pull", imageReference).Run()
 
 	// debug
@@ -74,7 +74,7 @@ func commandPull(imageReference string) {
 
 // helper function to create the `docker push` command.
 func commandPush(imageReference string) {
-	color.Green("	Pushishg to dockerHub %s", imageReference)
+	color.Green("	==> Pushishg to dockerHub %s", imageReference)
 	exec.Command("docker", "push", imageReference).Run()
 }
 
