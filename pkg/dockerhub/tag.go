@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/fatih/color"
 )
@@ -116,21 +117,19 @@ func (c *Client) GetLatestTag(image string) (string, error) {
 	return tags[0].Name, nil
 }
 
-// TruncateTags delete docker image tags except latest 20 ones
+// TruncateTags deletes docker image tags tags that match `regularExpression` OR are older than `expiredRange` except latest `leaveTagsCounter` ones
 func (c *Client) TruncateTags(image string, truncateOld bool, regularExpression string) error {
 	var tagsToRemove []string
-	var leaveTagsCounter int
-
-	if truncateOld {
-		leaveTagsCounter = 30
-	} else {
-		leaveTagsCounter = 0
-	}
+	const leaveTagsCounter = 25
 
 	tags, err := c.ListTags(image)
 	if err != nil {
 		return err
 	}
+
+	loc, _ := time.LoadLocation("UTC")
+	currentTime := time.Now().In(loc)
+	expiredRange := (time.Hour * 24 * 30)
 
 	if regularExpression != "" {
 		regexPattern := fmt.Sprintf(`(?i)%s`, regularExpression)
@@ -142,7 +141,11 @@ func (c *Client) TruncateTags(image string, truncateOld bool, regularExpression 
 		}
 	} else {
 		for _, tag := range tags {
-			tagsToRemove = append(tagsToRemove, tag.Name)
+			lastUpdatedAt := tag.LastUpdated.In(loc)
+			diff := currentTime.Sub(lastUpdatedAt)
+			if diff.Hours() > expiredRange.Hours() {
+				tagsToRemove = append(tagsToRemove, tag.Name)
+			}
 		}
 	}
 

@@ -72,7 +72,7 @@ dha describe --image=airflow
 # Get tags from the specified docker image repository on DockerHub.
 dha get --image=airflow
 
-# Truncate old tags (except latest 30 ones) in the specified docker image repository on DockerHub.
+# Truncate old tags (that are older than 30 days except latest 25 ones) in the specified docker image repository on DockerHub.
 dha truncate --image=airflow --truncateOld=true --dry-run=false
 
 # Truncate tags in the specified docker image repository on DockerHub by regEx.

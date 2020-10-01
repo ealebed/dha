@@ -50,7 +50,7 @@ func NewDockerhubTruncateTagsCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for truncating tags")
 	cmd.Flags().BoolVar(&options.allImages, "all", false, "truncate tags in all organization repositories")
-	cmd.Flags().BoolVar(&options.truncateOldTags, "truncateOld", false, "truncate old image tags (all tags, except latest 30 ones)")
+	cmd.Flags().BoolVar(&options.truncateOldTags, "truncateOld", false, "truncate old image tags (all tags, that are older 30 days except latest 25 ones)")
 	cmd.Flags().StringVar(&options.imageTagRegex, "regEx", "", "truncate image tags, matching specified regular expression string")
 	// cmd.MarkFlagRequired("image")
 
@@ -92,6 +92,7 @@ func truncateTags(flags *pflag.FlagSet, image string, allImages, truncateOld boo
 				dockerhub.NewClient(org, "").TruncateTags(repo.Name, truncateOld, regEx)
 			}
 		} else {
+			color.Blue("===> %s %s ", boldWhite("Processing docker image repository"), boldGreen(org+"/"+image))
 			dockerhub.NewClient(org, "").TruncateTags(image, truncateOld, regEx)
 		}
 	}
