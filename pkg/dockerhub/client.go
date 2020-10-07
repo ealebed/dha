@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/spf13/pflag"
 )
 
 // BaseURL represents Docker Hub endpoint
@@ -47,6 +48,20 @@ type Client struct {
 	AuthToken string
 	URL       string
 	ORG       string
+}
+
+func GetFlags(flags *pflag.FlagSet) (string, bool, error) {
+	org, err := flags.GetString("org")
+	if err != nil {
+		return "", true, err
+	}
+
+	dryRun, err := flags.GetBool("dry-run")
+	if err != nil {
+		return org, true, err
+	}
+
+	return org, dryRun, nil
 }
 
 func NewClient(org, url string) *Client {

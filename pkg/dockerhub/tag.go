@@ -120,7 +120,7 @@ func (c *Client) GetLatestTag(image string) (string, error) {
 // TruncateTags deletes docker image tags tags that match `regularExpression` OR are older than `expiredRange` except latest `leaveTagsCounter` ones
 func (c *Client) TruncateTags(image string, truncateOld bool, regularExpression string) error {
 	var tagsToRemove []string
-	const leaveTagsCounter = 25
+	var leaveTagsCounter = 0
 
 	tags, err := c.ListTags(image)
 	if err != nil {
@@ -145,12 +145,13 @@ func (c *Client) TruncateTags(image string, truncateOld bool, regularExpression 
 			diff := currentTime.Sub(lastUpdatedAt)
 			if diff.Hours() > expiredRange.Hours() {
 				tagsToRemove = append(tagsToRemove, tag.Name)
+				leaveTagsCounter = 25
 			}
 		}
 	}
 
 	for i := leaveTagsCounter; i < len(tagsToRemove); i++ {
-		fmt.Println("Delete tag", tagsToRemove[i])
+		color.Green("\u2714  Delete tag %s", BW(tagsToRemove[i]))
 		if err := c.deleteDockerImageTag(image, tagsToRemove[i]); err != nil {
 			color.Red("Error while deleting image tag: %s", err)
 		}

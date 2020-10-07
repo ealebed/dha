@@ -52,28 +52,19 @@ func NewDockerhubTruncateTagsCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&options.allImages, "all", false, "truncate tags in all organization repositories")
 	cmd.Flags().BoolVar(&options.truncateOldTags, "truncateOld", false, "truncate old image tags (all tags, that are older 30 days except latest 25 ones)")
 	cmd.Flags().StringVar(&options.imageTagRegex, "regEx", "", "truncate image tags, matching specified regular expression string")
-	// cmd.MarkFlagRequired("image")
 
 	return cmd
 }
 
 // truncateTags truncate tags in docker repository except latest 30 ones
 func truncateTags(flags *pflag.FlagSet, image string, allImages, truncateOld bool, regEx string) error {
-	boldGreen := color.New(color.FgGreen, color.Bold).SprintFunc()
-	boldWhite := color.New(color.FgWhite, color.Bold).SprintFunc()
-
-	org, err := flags.GetString("org")
-	if err != nil {
-		color.Red("Error: %s", err)
-	}
-
-	dryRun, err := flags.GetBool("dry-run")
+	org, dryRun, err := dockerhub.GetFlags(flags)
 	if err != nil {
 		color.Red("Error: %s", err)
 	}
 
 	if dryRun {
-		color.Yellow("[DRY-RUN] Truncating tags for docker image repository: %s/%s", boldWhite(org), boldWhite(image))
+		color.Yellow("[DRY-RUN] Truncating tags for docker image repository: %s/%s", dockerhub.BW(org), dockerhub.BW(image))
 	} else {
 		if !truncateOld && regEx == "" {
 			color.Red("You should provide RegExp for image tag or set flag truncateOld to 'true'")
@@ -88,11 +79,11 @@ func truncateTags(flags *pflag.FlagSet, image string, allImages, truncateOld boo
 				color.Red("Error: %s", err)
 			}
 			for repoCount, repo := range repositories {
-				color.Blue("===> %s %s %s/%s ", boldWhite("Processing docker image repository"), boldGreen(org+"/"+repo.Name), boldWhite(repoCount+1), boldWhite(len(repositories)))
+				color.Blue("===> %s %s %s/%s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+repo.Name), dockerhub.BW(repoCount+1), dockerhub.BW(len(repositories)))
 				dockerhub.NewClient(org, "").TruncateTags(repo.Name, truncateOld, regEx)
 			}
 		} else {
-			color.Blue("===> %s %s ", boldWhite("Processing docker image repository"), boldGreen(org+"/"+image))
+			color.Blue("===> %s %s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+image))
 			dockerhub.NewClient(org, "").TruncateTags(image, truncateOld, regEx)
 		}
 	}

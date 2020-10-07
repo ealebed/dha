@@ -51,7 +51,7 @@ func NewDockerhubDescribeRepositoryCmd() *cobra.Command {
 
 // describeRepository returns information about the provided dockerhub repository (image)
 func describeRepository(flags *pflag.FlagSet, image string) error {
-	org, err := flags.GetString("org")
+	org, _, err := dockerhub.GetFlags(flags)
 	if err != nil {
 		color.Red("Error: %s", err)
 	}

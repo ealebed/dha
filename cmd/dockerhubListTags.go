@@ -53,7 +53,7 @@ func NewDockerhubListTagsCmd() *cobra.Command {
 
 // listImageTags returns list tags from the provided dockerhub repository (image)
 func listImageTags(flags *pflag.FlagSet, image string) error {
-	org, err := flags.GetString("org")
+	org, _, err := dockerhub.GetFlags(flags)
 	if err != nil {
 		color.Red("Error: %s", err)
 	}
@@ -64,7 +64,7 @@ func listImageTags(flags *pflag.FlagSet, image string) error {
 	}
 
 	for count, tag := range tags {
-		fmt.Printf("| Tag %-6d| %-40s\n", count+1, tag.Name)
+		fmt.Printf("| Tag %-3d | %-30s | %s\n", count+1, dockerhub.BW(tag.Name), tag.LastUpdated)
 	}
 
 	return nil

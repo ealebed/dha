@@ -17,6 +17,8 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -43,7 +45,7 @@ func NewDockerhubListRepositoriesCmd() *cobra.Command {
 
 // listDockerhubRepos returns list of all Dockerhub repositories
 func listDockerhubRepos(flags *pflag.FlagSet) {
-	org, err := flags.GetString("org")
+	org, _, err := dockerhub.GetFlags(flags)
 	if err != nil {
 		color.Red("Error: %s", err)
 	}
@@ -60,11 +62,11 @@ func listDockerhubRepos(flags *pflag.FlagSet) {
 		}
 
 		if tagsCount == 0 {
-			color.Red("| Image %-6d| %-40s | [%d]\n", repoCount+1, repo.Name, tagsCount)
+			fmt.Printf("| Image %-5d | %-55s | [%s]\n", repoCount+1, dockerhub.BW(repo.Name), dockerhub.BR(tagsCount))
 		} else if tagsCount >= 50 {
-			color.Yellow("| Image %-6d| %-40s | [%d]\n", repoCount+1, repo.Name, tagsCount)
+			fmt.Printf("| Image %-5d | %-55s | [%s]\n", repoCount+1, dockerhub.BW(repo.Name), dockerhub.BY(tagsCount))
 		} else {
-			color.White("| Image %-6d| %-40s | [%d]\n", repoCount+1, repo.Name, tagsCount)
+			fmt.Printf("| Image %-5d | %-55s | [%s]\n", repoCount+1, dockerhub.BW(repo.Name), dockerhub.BW(tagsCount))
 		}
 	}
 }

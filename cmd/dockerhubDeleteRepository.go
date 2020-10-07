@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"github.com/fatih/color"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -52,24 +53,17 @@ func NewDockerhubDeleteRepositoryCmd() *cobra.Command {
 
 // deleteRepository deletes docker repository
 func deleteRepository(flags *pflag.FlagSet, image string) error {
-	boldGreen := color.New(color.FgGreen, color.Bold).SprintFunc()
-	boldWhite := color.New(color.FgWhite, color.Bold).SprintFunc()
-
-	org, err := flags.GetString("org")
-	if err != nil {
-		color.Red("Error: %s", err)
-	}
-
-	dryRun, err := flags.GetBool("dry-run")
+	org, dryRun, err := dockerhub.GetFlags(flags)
 	if err != nil {
 		color.Red("Error: %s", err)
 	}
 
 	if dryRun {
-		color.Yellow("[DRY-RUN] Delete docker image repository: %s/%s", boldWhite(org), boldWhite(image))
+		color.Yellow("[DRY-RUN] Delete docker image repository: %s/%s", dockerhub.BW(org), dockerhub.BW(image))
 	} else {
-		color.Blue("===> %s %s", boldWhite("Deleting docker image repository"), boldGreen(org+"/"+image))
+		color.Blue("===> %s %s", dockerhub.BW("Deleting docker image repository"), dockerhub.BG(org+"/"+image))
 		dockerhub.NewClient(org, "").DeleteRepository(image)
+		color.Green("\u2714")
 	}
 
 	return nil

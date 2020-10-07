@@ -14,24 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package version
+package dockerhub
 
 import (
-	"fmt"
+	"github.com/fatih/color"
 )
 
-// Version represents main version number being run right now.
-var Version = "1.1"
-
-// ReleasePhase represents pre-release marker for the version. If this is an empty string,
-// then the release is a final release. Otherwise this is a pre-release
-// version e.g. "dev", "alpha", etc.
-var ReleasePhase = ""
-
-// String prints the version of the dha CLI.
-func String() string {
-	if ReleasePhase != "" {
-		return fmt.Sprintf("%s-%s", Version, ReleasePhase)
-	}
-	return Version
-}
+var BG = color.New(color.FgGreen, color.Bold).SprintFunc()
+var BW = color.New(color.FgWhite, color.Bold).SprintFunc()
+var BY = color.New(color.FgYellow, color.Bold).SprintFunc()
+var BR = color.New(color.FgRed, color.Bold).SprintFunc()
