@@ -28,8 +28,8 @@ import (
 )
 
 // ListTags returns list of docker image tags for selected image from docker hub
-func (c *Client) ListTags(image string) (tags []*Tag, err error) {
-	tags = []*Tag{}
+func (c *Client) ListTags(image string) ([]*Tag, error) {
+	var tags = []*Tag{}
 	output, err := c.listTagsRequest(image, "")
 	if err != nil {
 		return nil, err
