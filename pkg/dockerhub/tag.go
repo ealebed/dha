@@ -94,6 +94,30 @@ func (c *Client) GetTagsCount(image string) (int, error) {
 	return tagsCount, nil
 }
 
+// GetAvgTagsSize returns size docker image tag from docker hub for selected repository
+func (c *Client) GetAvgTagsSize(image string) (float64, error) {
+	var size int
+
+	tagsCount, err := c.GetTagsCount(image)
+	if err != nil {
+		color.Red("Error: %s", err)
+	}
+
+	tags, err := c.ListTags(image)
+	if err != nil {
+		color.Red("Error: %s", err)
+	}
+
+	for _, tag := range tags {
+		size += tag.FullSize
+	}
+
+	var avgSize = float64(size) / float64(tagsCount) / 1024 / 1024
+	// fmt.Printf("| Tags average size %-.2f in MB\n", avgSize)
+
+	return avgSize, nil
+}
+
 // deleteDockerImageTag delete docker image tag from docker hub
 /* curl \
    -H "Authorization: JWT ${TOKEN}" \
