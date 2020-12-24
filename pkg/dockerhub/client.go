@@ -50,6 +50,7 @@ type Client struct {
 	ORG       string
 }
 
+// GetFlags returns variables from provided commandline flags
 func GetFlags(flags *pflag.FlagSet) (string, bool, error) {
 	org, err := flags.GetString("org")
 	if err != nil {
@@ -64,6 +65,7 @@ func GetFlags(flags *pflag.FlagSet) (string, bool, error) {
 	return org, dryRun, nil
 }
 
+// NewClient initialize new docker hub client
 func NewClient(org, url string) *Client {
 	c := &http.Client{
 		Timeout: time.Second * 30,
@@ -120,6 +122,7 @@ func (c *Client) GetAuthToken() (string, error) {
 	return accessToken.Token, nil
 }
 
+// NewRequest prepare request to docker hub
 func (c *Client) NewRequest(method, url string, payload io.Reader) (*http.Request, error) {
 	if c.AuthToken == "" {
 		token, err := c.GetAuthToken()

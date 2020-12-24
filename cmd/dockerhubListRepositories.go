@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -29,6 +30,14 @@ import (
 // listRepoOptions represents options for list command
 type listRepoOptions struct {
 	expand bool
+}
+
+// listResult represents data for use in channel from goroutines
+type listResult struct {
+	repoName      string
+	repoPullCount int
+	avgSize       float64
+	tagsCount     int
 }
 
 // NewDockerhubListRepositoriesCmd returns new docker repositories list command
@@ -54,6 +63,10 @@ func NewDockerhubListRepositoriesCmd() *cobra.Command {
 
 // listDockerhubRepos returns list of all Dockerhub repositories
 func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
+	var ret = []listResult{}
+	var wg sync.WaitGroup
+	chanRes := make(chan listResult)
+
 	org, _, err := dockerhub.GetFlags(flags)
 	if err != nil {
 		color.Red("Error: %s", err)
@@ -64,33 +77,67 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 		color.Red("Error: %s", err)
 	}
 
+	go func() {
+		for {
+			r, opened := <-chanRes
+			if !opened {
+				break
+			}
+			ret = append(ret, r)
+		}
+	}()
+
+	for _, repo := range repositories {
+		wg.Add(1)
+		go lister(org, repo, chanRes, &wg)
+	}
+
+	wg.Wait()
+	close(chanRes)
+
 	if options.expand {
 		fmt.Printf("| Image Num   | %-44s | %-7s | %-7s | %s\n", "Name", "Pulls ", "AvgSize (MB)", "Tags Count")
-	} else {
+	}
+	if !options.expand {
 		fmt.Printf("| Image Num   | %-55s | %s\n", "Name", "Tags Count")
 	}
 
-	for repoCount, repo := range repositories {
-		tagsCount, err := dockerhub.NewClient(org, "").GetTagsCount(repo.Name)
-		if err != nil {
-			color.Red("Error: %s", err)
-		}
-
+	for repoCount, info := range ret {
 		if options.expand {
-			avgSize, err := dockerhub.NewClient(org, "").GetAvgTagsSize(repo.Name)
-			if err != nil {
-				color.Red("Error: %s", err)
-			}
-			if tagsCount == 0 {
-				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(repo.Name), repo.PullCount, avgSize, dockerhub.BR(tagsCount))
-			} else if tagsCount >= 50 {
-				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(repo.Name), repo.PullCount, avgSize, dockerhub.BY(tagsCount))
+			if info.tagsCount == 0 {
+				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BR(info.tagsCount))
+			} else if info.tagsCount >= 50 {
+				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BY(info.tagsCount))
 			} else {
-				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(repo.Name), repo.PullCount, avgSize, dockerhub.BW(tagsCount))
+				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BW(info.tagsCount))
 			}
 		}
 		if !options.expand {
-			fmt.Printf("| Image %-5d | %-55s | [%d]\n", repoCount+1, repo.Name, tagsCount)
+			fmt.Printf("| Image %-5d | %-55s | [%d]\n", repoCount+1, info.repoName, info.tagsCount)
 		}
 	}
+
+}
+
+func lister(org string, repo *dockerhub.Repository, chanRes chan listResult, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	r := listResult{}
+
+	tagsCount, err := dockerhub.NewClient(org, "").GetTagsCount(repo.Name)
+	if err != nil {
+		color.Red("Error: %s", err)
+	}
+
+	avgSize, err := dockerhub.NewClient(org, "").GetAvgTagsSize(repo.Name)
+	if err != nil {
+		color.Red("Error: %s", err)
+	}
+
+	r.repoName = repo.Name
+	r.repoPullCount = repo.PullCount
+	r.avgSize = avgSize
+	r.tagsCount = tagsCount
+
+	chanRes <- r
 }

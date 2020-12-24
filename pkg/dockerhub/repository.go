@@ -71,6 +71,7 @@ func (c *Client) listRepositoriesRequest(next string) (*RepositoryList, error) {
 	return output, nil
 }
 
+// DescribeRepository print details about docker repository from docker hub
 func (c *Client) DescribeRepository(image string) (*Repository, error) {
 	data, _, err := c.doRequest(http.MethodGet, fmt.Sprintf("%s/%s/%s", RepositoriesURL, c.ORG, image), nil)
 	if err != nil {
@@ -86,7 +87,7 @@ func (c *Client) DescribeRepository(image string) (*Repository, error) {
 	return repo, nil
 }
 
-// DeleteDockerImage delete docker repository from docker hub
+// DeleteRepository delete docker repository from docker hub
 /* curl \
    -H "Authorization: JWT ${TOKEN}" \
    -X DELETE \

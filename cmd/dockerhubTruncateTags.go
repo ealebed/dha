@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"os"
+	"sync"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -74,19 +75,31 @@ func truncateTags(flags *pflag.FlagSet, image string, allImages, truncateOld boo
 			color.Red("You should provide image or set flag --all")
 			os.Exit(1)
 		} else if allImages && image == "" {
+			var wg sync.WaitGroup
+
 			repositories, err := dockerhub.NewClient(org, "").ListRepositories()
 			if err != nil {
 				color.Red("Error: %s", err)
 			}
 			for repoCount, repo := range repositories {
-				color.Blue("===> %s %s %s/%s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+repo.Name), dockerhub.BW(repoCount+1), dockerhub.BW(len(repositories)))
-				dockerhub.NewClient(org, "").TruncateTags(repo.Name, truncateOld, regEx)
+				wg.Add(1)
+				go truncater(repoCount, len(repositories), org, regEx, truncateOld, repo, &wg)
 			}
+			wg.Wait()
 		} else {
 			color.Blue("===> %s %s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+image))
 			dockerhub.NewClient(org, "").TruncateTags(image, truncateOld, regEx)
+			dockerhub.BG("Done \u2714")
 		}
 	}
 
 	return nil
+}
+
+func truncater(repoCount, repositories int, org, regEx string, truncateOld bool, repo *dockerhub.Repository, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	color.Blue("===> %s %s %s/%s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+repo.Name), dockerhub.BW(repoCount+1), dockerhub.BW(repositories))
+	dockerhub.NewClient(org, "").TruncateTags(repo.Name, truncateOld, regEx)
+	dockerhub.BG("Done \u2714")
 }

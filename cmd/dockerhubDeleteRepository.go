@@ -63,7 +63,7 @@ func deleteRepository(flags *pflag.FlagSet, image string) error {
 	} else {
 		color.Blue("===> %s %s", dockerhub.BW("Deleting docker image repository"), dockerhub.BG(org+"/"+image))
 		dockerhub.NewClient(org, "").DeleteRepository(image)
-		color.Green("\u2714")
+		color.Green("Done \u2714")
 	}
 
 	return nil

@@ -20,7 +20,14 @@ import (
 	"github.com/fatih/color"
 )
 
+// BG returns bold green color
 var BG = color.New(color.FgGreen, color.Bold).SprintFunc()
+
+// BW returns bold white color
 var BW = color.New(color.FgWhite, color.Bold).SprintFunc()
+
+// BY returns bold yellow color
 var BY = color.New(color.FgYellow, color.Bold).SprintFunc()
+
+// BR returns bold red color
 var BR = color.New(color.FgRed, color.Bold).SprintFunc()

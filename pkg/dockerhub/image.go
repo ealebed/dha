@@ -24,7 +24,7 @@ import (
 	"github.com/fatih/color"
 )
 
-// RenewDockerImage renew docker image tags older than 30 days from docker hub
+// RenewDockerImage renew docker image tags older than 20 days from docker hub
 func (c *Client) RenewDockerImage(image string) error {
 	tags, err := c.ListTags(image)
 	if err != nil {
@@ -33,13 +33,13 @@ func (c *Client) RenewDockerImage(image string) error {
 
 	loc, _ := time.LoadLocation("UTC")
 	currentTime := time.Now().In(loc)
-	expiredRange := (time.Hour * 24 * 20)
+	expiredRange := (time.Hour * 24 * 60)
 	validTag := regexp.MustCompile(`^\d{2}\.\d{2}\.\d{2}\-\d{2}\.\d{2}$`)
 
 	for _, tag := range tags {
 		imageReference := c.ORG + "/" + image + ":" + tag.Name
 		if !validTag.MatchString(tag.Name) {
-			color.Yellow("	Skip %s - invalid tag", imageReference)
+			color.Yellow("	Skip %s ", BW(imageReference))
 		} else {
 			lastUpdatedAt := tag.LastUpdated.In(loc)
 
@@ -49,7 +49,7 @@ func (c *Client) RenewDockerImage(image string) error {
 				commandPush(imageReference)
 				commandRmi(imageReference)
 			} else {
-				color.Yellow("	Skip %s - tag newer than %v hours", imageReference, expiredRange.Hours())
+				color.Yellow("	Skip %s ", BW(imageReference), expiredRange.Hours())
 			}
 		}
 	}
@@ -59,18 +59,18 @@ func (c *Client) RenewDockerImage(image string) error {
 
 // helper function to create the `docker pull` command.
 func commandPull(imageReference string) {
-	color.Green("	<== Pulling from dockerHub %s", imageReference)
+	color.Green("	<== Pulling from dockerHub %s ", BW(imageReference))
 	exec.Command("docker", "pull", imageReference).Run()
 }
 
 // helper function to create the `docker push` command.
 func commandPush(imageReference string) {
-	color.Green("	==> Pushing to dockerHub %s", imageReference)
+	color.Green("	==> Pushing to dockerHub %s ", BW(imageReference))
 	exec.Command("docker", "push", imageReference).Run()
 }
 
 // helper function to create the `docker image rm` command.
 func commandRmi(imageReference string) {
-	color.Red("	Removing from localhost %s", imageReference)
+	color.Red("	Removing from localhost %s ", BW(imageReference))
 	exec.Command("docker", "image", "rm", imageReference).Run()
 }
