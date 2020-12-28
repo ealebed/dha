@@ -33,7 +33,7 @@ func (c *Client) RenewDockerImage(image string) error {
 
 	loc, _ := time.LoadLocation("UTC")
 	currentTime := time.Now().In(loc)
-	expiredRange := (time.Hour * 24 * 60)
+	expiredRange := (time.Hour * 24 * 20)
 	validTag := regexp.MustCompile(`^\d{2}\.\d{2}\.\d{2}\-\d{2}\.\d{2}$`)
 
 	for _, tag := range tags {
@@ -49,7 +49,7 @@ func (c *Client) RenewDockerImage(image string) error {
 				commandPush(imageReference)
 				commandRmi(imageReference)
 			} else {
-				color.Yellow("	Skip %s ", BW(imageReference), expiredRange.Hours())
+				color.Yellow("	Skip %s ", BW(imageReference))
 			}
 		}
 	}
