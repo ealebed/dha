@@ -17,6 +17,8 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -61,7 +63,22 @@ func describeRepository(flags *pflag.FlagSet, image string) error {
 		color.Red("Error: %s", err)
 	}
 
-	color.Blue("User: %s\nName: %s\nNamespace: %s\nRepositoryType: %s\nStatus: %d\nDescription: %s\nIsPrivate: %t\nIsAutomated: %t\nCanEdit: %t\nStarCount: %d\nPullCount: %d\nLastUpdated: %s\nIsMigrated: %t\n", repoInfo.User, repoInfo.Name, repoInfo.Namespace, repoInfo.RepositoryType, repoInfo.Status, repoInfo.Description, repoInfo.IsPrivate, repoInfo.IsAutomated, repoInfo.CanEdit, repoInfo.StarCount, repoInfo.PullCount, repoInfo.LastUpdated, repoInfo.IsMigrated)
+	color.Blue("User: " + repoInfo.User +
+		"\nName: " + repoInfo.Name +
+		"\nNamespace: " + repoInfo.Namespace +
+		"\nRepositoryType: " + repoInfo.RepositoryType +
+		"\nStatus: " + fmt.Sprintf("%d", repoInfo.Status) +
+		"\nDescription: " + repoInfo.Description +
+		"\nIsPrivate: " + fmt.Sprintf("%t", repoInfo.IsPrivate) +
+		"\nIsAutomated: " + fmt.Sprintf("%t", repoInfo.IsAutomated) +
+		"\nCanEdit: " + fmt.Sprintf("%t", repoInfo.CanEdit) +
+		"\nStarCount: " + fmt.Sprintf("%d", repoInfo.StarCount) +
+		"\nPullCount: " + fmt.Sprintf("%d", repoInfo.PullCount) +
+		"\nLastUpdated: " + fmt.Sprint(repoInfo.LastUpdated) +
+		"\nIsMigrated: " + fmt.Sprintf("%t", repoInfo.IsMigrated) +
+		"\nCollaboratorCount: " + fmt.Sprintf("%d", repoInfo.CollaboratorCount) +
+		"\nAffiliation: " + repoInfo.Affiliation +
+		"\nHubUser: " + repoInfo.HubUser)
 
 	return nil
 }

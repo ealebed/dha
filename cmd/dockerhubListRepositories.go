@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -38,6 +39,7 @@ type listResult struct {
 	repoPullCount int
 	avgSize       float64
 	tagsCount     int
+	lastUpdated   string
 }
 
 // NewDockerhubListRepositoriesCmd returns new docker repositories list command
@@ -87,7 +89,10 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 		}
 	}()
 
+	limiter := time.Tick(300 * time.Millisecond)
+
 	for _, repo := range repositories {
+		<-limiter
 		wg.Add(1)
 		go lister(org, repo, chanRes, &wg)
 	}
@@ -96,7 +101,7 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 	close(chanRes)
 
 	if options.expand {
-		fmt.Printf("| Image Num   | %-44s | %-7s | %-7s | %s\n", "Name", "Pulls ", "AvgSize (MB)", "Tags Count")
+		fmt.Printf("| Image Num   | %-44s | %-7s | %-7s | %-7s | %s\n", "Name", "Pulls Count", "AvgSize (MB)", "Tags Count", "Last Updated")
 	}
 	if !options.expand {
 		fmt.Printf("| Image Num   | %-55s | %s\n", "Name", "Tags Count")
@@ -105,15 +110,15 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 	for repoCount, info := range ret {
 		if options.expand {
 			if info.tagsCount == 0 {
-				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BR(info.tagsCount))
+				fmt.Printf("| Image %-5d | %-55s | %-11d | %-12.2f | %-21s | %s\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BR(info.tagsCount), info.lastUpdated)
 			} else if info.tagsCount >= 50 {
-				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BY(info.tagsCount))
+				fmt.Printf("| Image %-5d | %-55s | %-11d | %-12.2f | %-21s | %s\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BY(info.tagsCount), info.lastUpdated)
 			} else {
-				fmt.Printf("| Image %-5d | %-55s | %-7d | %-12.2f | [%s]\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BW(info.tagsCount))
+				fmt.Printf("| Image %-5d | %-55s | %-11d | %-12.2f | %-21s | %s\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BW(info.tagsCount), info.lastUpdated)
 			}
 		}
 		if !options.expand {
-			fmt.Printf("| Image %-5d | %-55s | [%d]\n", repoCount+1, info.repoName, info.tagsCount)
+			fmt.Printf("| Image %-5d | %-55s | %d\n", repoCount+1, info.repoName, info.tagsCount)
 		}
 	}
 
@@ -138,6 +143,7 @@ func lister(org string, repo *dockerhub.Repository, chanRes chan listResult, wg 
 	r.repoPullCount = repo.PullCount
 	r.avgSize = avgSize
 	r.tagsCount = tagsCount
+	r.lastUpdated = repo.LastUpdated.String()
 
 	chanRes <- r
 }

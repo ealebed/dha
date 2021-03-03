@@ -113,7 +113,6 @@ func (c *Client) GetAvgTagsSize(image string) (float64, error) {
 	}
 
 	var avgSize = float64(size) / float64(tagsCount) / 1024 / 1024
-	// fmt.Printf("| Tags average size %-.2f in MB\n", avgSize)
 
 	return avgSize, nil
 }
