@@ -64,7 +64,7 @@ func listImageTags(flags *pflag.FlagSet, image string) error {
 	}
 
 	for count, tag := range tags {
-		fmt.Printf("| Tag %-3d | %-30s | %s\n", count+1, dockerhub.BW(tag.Name), tag.LastUpdated)
+		fmt.Printf("| Tag %-3d | %-60s | %s\n", count+1, dockerhub.BW(tag.Name), tag.LastUpdated)
 	}
 
 	return nil
