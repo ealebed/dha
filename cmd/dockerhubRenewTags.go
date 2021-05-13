@@ -18,7 +18,7 @@ package cmd
 
 import (
 	"os"
-	"sync"
+	"runtime"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -67,17 +67,23 @@ func renewImageTags(flags *pflag.FlagSet, image string, allImages bool) error {
 			color.Red("You should provide image or set flag --all")
 			os.Exit(1)
 		} else if allImages && image == "" {
-			var wg sync.WaitGroup
+			runtime.GOMAXPROCS(runtime.NumCPU())
+			availableRoutines := runtime.NumCPU()
+			routineReady := make(chan bool)
 
 			repositories, err := dockerhub.NewClient(org, "").ListRepositories()
 			if err != nil {
 				color.Red("Error: %s", err)
 			}
 			for repoCount, repo := range repositories {
-				wg.Add(1)
-				go renewer(repoCount, len(repositories), org, repo, &wg)
+				if availableRoutines == 0 {
+					<-routineReady
+					availableRoutines = availableRoutines + 1
+				}
+				availableRoutines = availableRoutines - 1
+
+				go renewer(repoCount, len(repositories), org, repo, routineReady)
 			}
-			wg.Wait()
 		} else {
 			dockerhub.NewClient(org, "").RenewDockerImage(image)
 			dockerhub.BG("Done \u2714")
@@ -87,10 +93,10 @@ func renewImageTags(flags *pflag.FlagSet, image string, allImages bool) error {
 	return nil
 }
 
-func renewer(repoCount, repositories int, org string, repo *dockerhub.Repository, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func renewer(repoCount, repositories int, org string, repo *dockerhub.Repository, routineReady chan bool) {
 	color.Blue("===> %s %s %s/%s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+repo.Name), dockerhub.BW(repoCount+1), dockerhub.BW(repositories))
 	dockerhub.NewClient(org, "").RenewDockerImage(repo.Name)
 	dockerhub.BG("Done \u2714")
+
+	routineReady <- true
 }

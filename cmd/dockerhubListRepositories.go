@@ -18,8 +18,7 @@ package cmd
 
 import (
 	"fmt"
-	"sync"
-	"time"
+	"runtime"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -66,7 +65,10 @@ func NewDockerhubListRepositoriesCmd() *cobra.Command {
 // listDockerhubRepos returns list of all Dockerhub repositories
 func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 	var ret = []listResult{}
-	var wg sync.WaitGroup
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	availableRoutines := runtime.NumCPU()
+	routineReady := make(chan bool)
 	chanRes := make(chan listResult)
 
 	org, _, err := dockerhub.GetFlags(flags)
@@ -89,15 +91,22 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 		}
 	}()
 
-	limiter := time.Tick(300 * time.Millisecond)
-
 	for _, repo := range repositories {
-		<-limiter
-		wg.Add(1)
-		go lister(org, repo, chanRes, &wg)
+		if availableRoutines == 0 {
+			fmt.Println("Wait for available routines...")
+			<-routineReady
+			availableRoutines = availableRoutines + 1
+		}
+		availableRoutines = availableRoutines - 1
+
+		go lister(org, repo, chanRes, routineReady)
+	}
+	for availableRoutines < runtime.NumCPU() {
+		fmt.Println("Finish. Now we have free routines: ", availableRoutines)
+		<-routineReady
+		availableRoutines = availableRoutines + 1
 	}
 
-	wg.Wait()
 	close(chanRes)
 
 	if options.expand {
@@ -124,9 +133,7 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 
 }
 
-func lister(org string, repo *dockerhub.Repository, chanRes chan listResult, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func lister(org string, repo *dockerhub.Repository, chanRes chan listResult, routineReady chan bool) {
 	r := listResult{}
 
 	tagsCount, err := dockerhub.NewClient(org, "").GetTagsCount(repo.Name)
@@ -145,5 +152,6 @@ func lister(org string, repo *dockerhub.Repository, chanRes chan listResult, wg 
 	r.tagsCount = tagsCount
 	r.lastUpdated = repo.LastUpdated.String()
 
+	routineReady <- true
 	chanRes <- r
 }
