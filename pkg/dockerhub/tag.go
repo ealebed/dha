@@ -161,7 +161,7 @@ func (c *Client) TruncateTags(image string, truncateInactive bool, regularExpres
 		for _, tag := range tags {
 			if tag.TagStatus == "inactive" {
 				tagsToRemove = append(tagsToRemove, tag.Name)
-				leaveTagsCounter = 3
+				leaveTagsCounter = 1
 			}
 		}
 	}

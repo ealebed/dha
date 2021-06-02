@@ -84,6 +84,12 @@ dha truncate --all --regEx=cron --dry-run=false
 # Truncate inactive image tags in all docker image repositories on DockerHub.
 dha truncate --all --inactive --dry-run=false
 
+# Truncate image tags by regEx in docker image repositories regEx matched on DockerHub.
+dha truncate --imageRegEx=ads-user-management --tagRegEx=20.11 --dry-run=false
+
+# Truncate inactive image tags in docker image repositories regEx matched on DockerHub.
+dha truncate --imageRegEx=ads-user-management --inactive --dry-run=false
+
 # Renew (pull/push) tags in the specified docker image repository on DockerHub.
 dha renew --image=sentinel-dashboard --dry-run=false
 

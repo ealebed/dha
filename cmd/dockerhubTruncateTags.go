@@ -17,7 +17,9 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"regexp"
 	"runtime"
 
 	"github.com/fatih/color"
@@ -30,6 +32,7 @@ import (
 // TruncateTagsOptions represents options for truncate command
 type TruncateTagsOptions struct {
 	imageName            string
+	imageNameRegex       string
 	allImages            bool
 	truncateInactiveTags bool
 	imageTagRegex        string
@@ -43,22 +46,23 @@ func NewDockerhubTruncateTagsCmd() *cobra.Command {
 		Use:     "truncate",
 		Short:   "truncate tags in the specified docker repository",
 		Long:    "truncate tags in the specified docker image repository (by default, except latest 30 ones)",
-		Example: "dha truncate [--image=...] || [--all] [--inactive=...] || [--regEx=...]",
+		Example: "dha truncate [--image=...] || [--imageRegEx=...] || [--all] [--inactive=...] || [--tagRegEx=...]",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return truncateTags(cmd.InheritedFlags(), options.imageName, options.allImages, options.truncateInactiveTags, options.imageTagRegex)
+			return truncateTags(cmd.InheritedFlags(), options.imageName, options.imageNameRegex, options.allImages, options.truncateInactiveTags, options.imageTagRegex)
 		},
 	}
 
 	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for truncating tags")
+	cmd.Flags().StringVar(&options.imageNameRegex, "imageRegEx", "", "docker image name, matching specified regular expression string")
 	cmd.Flags().BoolVar(&options.allImages, "all", false, "truncate tags in all organization repositories")
 	cmd.Flags().BoolVar(&options.truncateInactiveTags, "inactive", false, "truncate inactive image tags (tags that haven't been pushed or pulled in over a month)")
-	cmd.Flags().StringVar(&options.imageTagRegex, "regEx", "", "truncate image tags, matching specified regular expression string")
+	cmd.Flags().StringVar(&options.imageTagRegex, "tagRegEx", "", "truncate image tags, matching specified regular expression string")
 
 	return cmd
 }
 
 // truncateTags truncate tags in docker repository except latest 30 ones
-func truncateTags(flags *pflag.FlagSet, image string, allImages, truncateInactive bool, regEx string) error {
+func truncateTags(flags *pflag.FlagSet, image, imageRegex string, allImages, truncateInactive bool, tagRegex string) error {
 	org, dryRun, err := dockerhub.GetFlags(flags)
 	if err != nil {
 		color.Red("Error: %s", err)
@@ -67,14 +71,14 @@ func truncateTags(flags *pflag.FlagSet, image string, allImages, truncateInactiv
 	if dryRun {
 		color.Yellow("[DRY-RUN] Truncating tags for docker image repository: %s/%s", dockerhub.BW(org), dockerhub.BW(image))
 	} else {
-		if !truncateInactive && regEx == "" {
+		if !truncateInactive && tagRegex == "" {
 			color.Red("You should provide RegExp for image tag or set flag '--inactive'")
 			os.Exit(1)
 		}
-		if !allImages && image == "" {
-			color.Red("You should provide image or set flag '--all'")
+		if !allImages && image == "" && imageRegex == "" {
+			color.Red("You should provide image (fixed name or RegExp) or set flag '--all'")
 			os.Exit(1)
-		} else if allImages && image == "" {
+		} else if allImages && (image == "" || imageRegex == "") {
 			runtime.GOMAXPROCS(runtime.NumCPU())
 			availableRoutines := runtime.NumCPU()
 			routineReady := make(chan bool)
@@ -91,16 +95,36 @@ func truncateTags(flags *pflag.FlagSet, image string, allImages, truncateInactiv
 				}
 				availableRoutines = availableRoutines - 1
 
-				go truncater(repoCount, len(repositories), org, regEx, truncateInactive, repo, routineReady)
+				go truncater(repoCount, len(repositories), org, tagRegex, truncateInactive, repo, routineReady)
 			}
 
 			for availableRoutines < runtime.NumCPU() {
 				<-routineReady
 				availableRoutines = availableRoutines + 1
 			}
+		} else if !allImages && image == "" && imageRegex != "" {
+			var repositoriesToTruncate []string
+			repositories, err := dockerhub.NewClient(org, "").ListRepositories()
+			if err != nil {
+				color.Red("Error: %s", err)
+			}
+
+			regexPattern := fmt.Sprintf(`(?i)%s`, imageRegex)
+			for _, repo := range repositories {
+				matched, _ := regexp.MatchString(regexPattern, repo.Name)
+				if matched {
+					repositoriesToTruncate = append(repositoriesToTruncate, repo.Name)
+				}
+			}
+
+			for _, image := range repositoriesToTruncate {
+				color.Blue("===> %s %s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+image))
+				dockerhub.NewClient(org, "").TruncateTags(image, truncateInactive, tagRegex)
+				dockerhub.BG("Done \u2714")
+			}
 		} else {
 			color.Blue("===> %s %s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+image))
-			dockerhub.NewClient(org, "").TruncateTags(image, truncateInactive, regEx)
+			dockerhub.NewClient(org, "").TruncateTags(image, truncateInactive, tagRegex)
 			dockerhub.BG("Done \u2714")
 		}
 	}
@@ -108,9 +132,9 @@ func truncateTags(flags *pflag.FlagSet, image string, allImages, truncateInactiv
 	return nil
 }
 
-func truncater(repoCount, repositories int, org, regEx string, truncateInactive bool, repo *dockerhub.Repository, routineReady chan bool) {
+func truncater(repoCount, repositories int, org, tagRegex string, truncateInactive bool, repo *dockerhub.Repository, routineReady chan bool) {
 	color.Blue("===> %s %s %s/%s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+repo.Name), dockerhub.BW(repoCount+1), dockerhub.BW(repositories))
-	dockerhub.NewClient(org, "").TruncateTags(repo.Name, truncateInactive, regEx)
+	dockerhub.NewClient(org, "").TruncateTags(repo.Name, truncateInactive, tagRegex)
 	dockerhub.BG("Done \u2714")
 
 	routineReady <- true
