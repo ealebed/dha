@@ -21,6 +21,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -88,7 +89,10 @@ func truncateTags(flags *pflag.FlagSet, image, imageRegex string, allImages, tru
 				color.Red("Error: %s", err)
 			}
 
+			limiter := time.Tick(300 * time.Millisecond)
+
 			for repoCount, repo := range repositories {
+				<-limiter
 				if availableRoutines == 0 {
 					<-routineReady
 					availableRoutines = availableRoutines + 1
@@ -104,6 +108,7 @@ func truncateTags(flags *pflag.FlagSet, image, imageRegex string, allImages, tru
 			}
 		} else if !allImages && image == "" && imageRegex != "" {
 			var repositoriesToTruncate []string
+
 			repositories, err := dockerhub.NewClient(org, "").ListRepositories()
 			if err != nil {
 				color.Red("Error: %s", err)

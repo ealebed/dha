@@ -19,6 +19,7 @@ package cmd
 import (
 	"fmt"
 	"runtime"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -91,9 +92,11 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 		}
 	}()
 
+	limiter := time.Tick(300 * time.Millisecond)
+
 	for _, repo := range repositories {
+		<-limiter
 		if availableRoutines == 0 {
-			fmt.Println("Wait for available routines...")
 			<-routineReady
 			availableRoutines = availableRoutines + 1
 		}
@@ -101,8 +104,8 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 
 		go lister(org, repo, chanRes, routineReady)
 	}
+
 	for availableRoutines < runtime.NumCPU() {
-		fmt.Println("Finish. Now we have free routines: ", availableRoutines)
 		<-routineReady
 		availableRoutines = availableRoutines + 1
 	}
