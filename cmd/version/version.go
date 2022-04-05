@@ -21,7 +21,7 @@ import (
 )
 
 // Version represents main version number being run right now.
-var Version = "1.1"
+var Version = "v0.1.0"
 
 // ReleasePhase represents pre-release marker for the version. If this is an empty string,
 // then the release is a final release. Otherwise this is a pre-release

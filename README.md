@@ -1,6 +1,6 @@
 # dha
 
-Docker Hub Administrator utility
+Docker Hub Administrator command line tool
 
 ## Get
 
