@@ -52,7 +52,7 @@ func (c *Client) ListRepositories() (repos []*Repository, err error) {
 func (c *Client) listRepositoriesRequest(next string) (*RepositoryList, error) {
 	var url string
 	if next != "" {
-		url = fmt.Sprint(next)
+		url = next
 	} else {
 		url = fmt.Sprintf("%s/%s/?page=1&page_size=100", RepositoriesURL, c.ORG)
 	}

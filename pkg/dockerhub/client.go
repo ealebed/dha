@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -105,7 +104,6 @@ func (c *Client) GetAuthToken() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	defer resp.Body.Close()
 
 	accessToken := &AuthResponse{}
@@ -152,15 +150,23 @@ func (c *Client) doRequest(method, url string, payload io.Reader) (data []byte, 
 		return nil, 0, err
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
-	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			return nil, 0, fmt.Errorf("failed to read body: %w; failed to close: %w", err, closeErr)
+		}
 		return nil, 0, err
 	}
+	defer func() {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			// Log but don't fail on close errors
+			color.Yellow("Warning: failed to close response body: %v", closeErr)
+		}
+	}()
 
 	if (method == http.MethodGet) && (response.StatusCode != http.StatusOK) {
-		color.Red("HTTP error!\nURL: %s\nstatus code: %d\nbody:\n%s\n", url, response.StatusCode, response.Body)
-		return nil, response.StatusCode, err
+		color.Red("HTTP error!\nURL: %s\nstatus code: %d\nbody:\n%s\n", url, response.StatusCode, string(body))
+		return nil, response.StatusCode, fmt.Errorf("HTTP %d: %s", response.StatusCode, string(body))
 	}
 
 	return body, response.StatusCode, nil

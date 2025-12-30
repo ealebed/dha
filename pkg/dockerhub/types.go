@@ -60,7 +60,7 @@ type Image struct {
 	Size         int       `json:"size"`
 	Status       string    `json:"status"`
 	LastPulled   time.Time `json:"last_pulled"`
-	PastPushed   time.Time `json:"last_pushed"`
+	LastPushed   time.Time `json:"last_pushed"`
 }
 
 // Tag represents docker tag information returned from hub.docker.com
@@ -78,7 +78,7 @@ type Tag struct {
 	V2              bool      `json:"v2"`
 	TagStatus       string    `json:"tag_status"`
 	TagLastPulled   time.Time `json:"tag_last_pulled"`
-	TagLstaPushed   time.Time `json:"tag_last_pushed"`
+	TagLastPushed   time.Time `json:"tag_last_pushed"`
 }
 
 // TagList represents the search tags results from hub.docker.com

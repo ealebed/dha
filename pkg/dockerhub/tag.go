@@ -54,7 +54,7 @@ func (c *Client) ListTags(image string) ([]*Tag, error) {
 func (c *Client) listTagsRequest(image, next string) (*TagList, error) {
 	var url string
 	if next != "" {
-		url = fmt.Sprint(next)
+		url = next
 	} else {
 		url = fmt.Sprintf("%s/%s/%s/tags/?page_size=100", RepositoriesURL, c.ORG, image)
 	}
