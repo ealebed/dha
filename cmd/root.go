@@ -20,8 +20,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/ealebed/dha/cmd/version"
 	"github.com/spf13/cobra"
+
+	"github.com/ealebed/dha/cmd/version"
 )
 
 // RootOptions implements global flags for all commands

@@ -92,7 +92,7 @@ func NewClient(org, url string) *Client {
    https://hub.docker.com/v2/users/login/ | jq -r .token
 */
 func (c *Client) GetAuthToken() (string, error) {
-	payload := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, os.Getenv("DOCKERHUB_USERNAME"), os.Getenv("DOCKERHUB_PASSWORD"))
+	payload := fmt.Sprintf(`{"username": %q, "password": %q}`, os.Getenv("DOCKERHUB_USERNAME"), os.Getenv("DOCKERHUB_PASSWORD"))
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/users/login", BaseURL), bytes.NewBuffer([]byte(payload)))
 	if err != nil {
@@ -100,21 +100,25 @@ func (c *Client) GetAuthToken() (string, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.Client.Do(req)
+	resp, err := c.Do(req)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			color.Yellow("Warning: failed to close response body: %v", closeErr)
+		}
+	}()
 
 	accessToken := &AuthResponse{}
-	if err = json.NewDecoder(resp.Body).Decode(accessToken); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(accessToken); err != nil {
 		return "", err
 	}
 
 	c.AuthToken = accessToken.Token
 	if accessToken.Token == "" {
 		color.Red("failed to log into the registry")
-		return "", err
+		return "", fmt.Errorf("empty token received")
 	}
 
 	return accessToken.Token, nil
@@ -139,23 +143,23 @@ func (c *Client) NewRequest(method, url string, payload io.Reader) (*http.Reques
 	return req, nil
 }
 
-func (c *Client) doRequest(method, url string, payload io.Reader) (data []byte, status int, err error) {
-	request, err := c.NewRequest(method, url, payload)
+func (c *Client) doRequest(method, url string, _ io.Reader) (data []byte, err error) {
+	request, err := c.NewRequest(method, url, nil)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	response, err := c.Client.Do(request)
+	response, err := c.Do(request)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		if closeErr := response.Body.Close(); closeErr != nil {
-			return nil, 0, fmt.Errorf("failed to read body: %w; failed to close: %w", err, closeErr)
+			return nil, fmt.Errorf("failed to read body: %w; failed to close: %w", err, closeErr)
 		}
-		return nil, 0, err
+		return nil, err
 	}
 	defer func() {
 		if closeErr := response.Body.Close(); closeErr != nil {
@@ -166,8 +170,8 @@ func (c *Client) doRequest(method, url string, payload io.Reader) (data []byte, 
 
 	if (method == http.MethodGet) && (response.StatusCode != http.StatusOK) {
 		color.Red("HTTP error!\nURL: %s\nstatus code: %d\nbody:\n%s\n", url, response.StatusCode, string(body))
-		return nil, response.StatusCode, fmt.Errorf("HTTP %d: %s", response.StatusCode, string(body))
+		return nil, fmt.Errorf("HTTP %d: %s", response.StatusCode, string(body))
 	}
 
-	return body, response.StatusCode, nil
+	return body, nil
 }

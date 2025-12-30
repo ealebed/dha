@@ -46,7 +46,10 @@ func NewDockerhubListTagsCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for getting tags")
-	cmd.MarkFlagRequired("image")
+	if err := cmd.MarkFlagRequired("image"); err != nil {
+		// Flag marking should not fail in normal operation
+		return nil
+	}
 
 	return cmd
 }

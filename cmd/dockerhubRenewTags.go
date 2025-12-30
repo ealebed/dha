@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 
@@ -78,14 +79,16 @@ func renewImageTags(flags *pflag.FlagSet, image string, allImages bool) error {
 			for repoCount, repo := range repositories {
 				if availableRoutines == 0 {
 					<-routineReady
-					availableRoutines = availableRoutines + 1
+					availableRoutines++
 				}
-				availableRoutines = availableRoutines - 1
+				availableRoutines--
 
 				go renewer(repoCount, len(repositories), org, repo, routineReady)
 			}
 		} else {
-			dockerhub.NewClient(org, "").RenewDockerImage(image)
+			if err := dockerhub.NewClient(org, "").RenewDockerImage(image); err != nil {
+				return fmt.Errorf("failed to renew image: %w", err)
+			}
 			dockerhub.BG("Done \u2714")
 		}
 	}
@@ -94,8 +97,12 @@ func renewImageTags(flags *pflag.FlagSet, image string, allImages bool) error {
 }
 
 func renewer(repoCount, repositories int, org string, repo *dockerhub.Repository, routineReady chan bool) {
-	color.Blue("===> %s %s %s/%s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+repo.Name), dockerhub.BW(repoCount+1), dockerhub.BW(repositories))
-	dockerhub.NewClient(org, "").RenewDockerImage(repo.Name)
+	msg := "Processing docker image repository"
+	repoName := org + "/" + repo.Name
+	color.Blue("===> %s %s %s/%s ", dockerhub.BW(msg), dockerhub.BG(repoName), dockerhub.BW(repoCount+1), dockerhub.BW(repositories))
+	if err := dockerhub.NewClient(org, "").RenewDockerImage(repo.Name); err != nil {
+		color.Red("Error renewing image %s: %v", repo.Name, err)
+	}
 	dockerhub.BG("Done \u2714")
 
 	routineReady <- true
