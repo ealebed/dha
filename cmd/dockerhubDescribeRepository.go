@@ -46,7 +46,10 @@ func NewDockerhubDescribeRepositoryCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for getting information")
-	cmd.MarkFlagRequired("image")
+	if err := cmd.MarkFlagRequired("image"); err != nil {
+		// Flag marking should not fail in normal operation
+		return nil
+	}
 
 	return cmd
 }
@@ -74,7 +77,7 @@ func describeRepository(flags *pflag.FlagSet, image string) error {
 		"\nCanEdit: " + fmt.Sprintf("%t", repoInfo.CanEdit) +
 		"\nStarCount: " + fmt.Sprintf("%d", repoInfo.StarCount) +
 		"\nPullCount: " + fmt.Sprintf("%d", repoInfo.PullCount) +
-		"\nLastUpdated: " + fmt.Sprint(repoInfo.LastUpdated) +
+		"\nLastUpdated: " + repoInfo.LastUpdated.String() +
 		"\nIsMigrated: " + fmt.Sprintf("%t", repoInfo.IsMigrated) +
 		"\nCollaboratorCount: " + fmt.Sprintf("%d", repoInfo.CollaboratorCount) +
 		"\nAffiliation: " + repoInfo.Affiliation +

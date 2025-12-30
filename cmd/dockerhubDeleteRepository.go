@@ -17,8 +17,9 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/fatih/color"
+	"fmt"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -46,7 +47,10 @@ func NewDockerhubDeleteRepositoryCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&options.imageName, "image", "i", "", "docker image name for delete")
-	cmd.MarkFlagRequired("image")
+	if err := cmd.MarkFlagRequired("image"); err != nil {
+		// Flag marking should not fail in normal operation
+		return nil
+	}
 
 	return cmd
 }
@@ -62,7 +66,9 @@ func deleteRepository(flags *pflag.FlagSet, image string) error {
 		color.Yellow("[DRY-RUN] Delete docker image repository: %s/%s", dockerhub.BW(org), dockerhub.BW(image))
 	} else {
 		color.Blue("===> %s %s", dockerhub.BW("Deleting docker image repository"), dockerhub.BG(org+"/"+image))
-		dockerhub.NewClient(org, "").DeleteRepository(image)
+		if err := dockerhub.NewClient(org, "").DeleteRepository(image); err != nil {
+			return fmt.Errorf("failed to delete repository: %w", err)
+		}
 		color.Green("Done \u2714")
 	}
 

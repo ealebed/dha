@@ -71,75 +71,109 @@ func truncateTags(flags *pflag.FlagSet, image, imageRegex string, allImages, tru
 
 	if dryRun {
 		color.Yellow("[DRY-RUN] Truncating tags for docker image repository: %s/%s", dockerhub.BW(org), dockerhub.BW(image))
-	} else {
-		if !truncateInactive && tagRegex == "" {
-			color.Red("You should provide RegExp for image tag or set flag '--inactive'")
-			os.Exit(1)
+		return nil
+	}
+
+	if err := validateTruncateFlags(truncateInactive, tagRegex, allImages, image, imageRegex); err != nil {
+		return err
+	}
+
+	if allImages && (image == "" || imageRegex == "") {
+		return truncateAllRepositories(org, tagRegex, truncateInactive)
+	}
+
+	if !allImages && image == "" && imageRegex != "" {
+		return truncateRepositoriesByRegex(org, imageRegex, truncateInactive, tagRegex)
+	}
+
+	return truncateSingleRepository(org, image, truncateInactive, tagRegex)
+}
+
+func validateTruncateFlags(truncateInactive bool, tagRegex string, allImages bool, image, imageRegex string) error {
+	if !truncateInactive && tagRegex == "" {
+		color.Red("You should provide RegExp for image tag or set flag '--inactive'")
+		os.Exit(1)
+	}
+	if !allImages && image == "" && imageRegex == "" {
+		color.Red("You should provide image (fixed name or RegExp) or set flag '--all'")
+		os.Exit(1)
+	}
+	return nil
+}
+
+func truncateAllRepositories(org, tagRegex string, truncateInactive bool) error {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	availableRoutines := runtime.NumCPU()
+	routineReady := make(chan bool)
+
+	repositories, err := dockerhub.NewClient(org, "").ListRepositories()
+	if err != nil {
+		return fmt.Errorf("failed to list repositories: %w", err)
+	}
+
+	limiter := time.Tick(300 * time.Millisecond)
+
+	for repoCount, repo := range repositories {
+		<-limiter
+		if availableRoutines == 0 {
+			<-routineReady
+			availableRoutines++
 		}
-		if !allImages && image == "" && imageRegex == "" {
-			color.Red("You should provide image (fixed name or RegExp) or set flag '--all'")
-			os.Exit(1)
-		} else if allImages && (image == "" || imageRegex == "") {
-			runtime.GOMAXPROCS(runtime.NumCPU())
-			availableRoutines := runtime.NumCPU()
-			routineReady := make(chan bool)
+		availableRoutines--
 
-			repositories, err := dockerhub.NewClient(org, "").ListRepositories()
-			if err != nil {
-				color.Red("Error: %s", err)
-			}
+		go truncater(repoCount, len(repositories), org, tagRegex, truncateInactive, repo, routineReady)
+	}
 
-			limiter := time.Tick(300 * time.Millisecond)
-
-			for repoCount, repo := range repositories {
-				<-limiter
-				if availableRoutines == 0 {
-					<-routineReady
-					availableRoutines = availableRoutines + 1
-				}
-				availableRoutines = availableRoutines - 1
-
-				go truncater(repoCount, len(repositories), org, tagRegex, truncateInactive, repo, routineReady)
-			}
-
-			for availableRoutines < runtime.NumCPU() {
-				<-routineReady
-				availableRoutines = availableRoutines + 1
-			}
-		} else if !allImages && image == "" && imageRegex != "" {
-			var repositoriesToTruncate []string
-
-			repositories, err := dockerhub.NewClient(org, "").ListRepositories()
-			if err != nil {
-				color.Red("Error: %s", err)
-			}
-
-			regexPattern := fmt.Sprintf(`(?i)%s`, imageRegex)
-			for _, repo := range repositories {
-				matched, _ := regexp.MatchString(regexPattern, repo.Name)
-				if matched {
-					repositoriesToTruncate = append(repositoriesToTruncate, repo.Name)
-				}
-			}
-
-			for _, image := range repositoriesToTruncate {
-				color.Blue("===> %s %s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+image))
-				dockerhub.NewClient(org, "").TruncateTags(image, truncateInactive, tagRegex)
-				dockerhub.BG("Done \u2714")
-			}
-		} else {
-			color.Blue("===> %s %s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+image))
-			dockerhub.NewClient(org, "").TruncateTags(image, truncateInactive, tagRegex)
-			dockerhub.BG("Done \u2714")
-		}
+	for availableRoutines < runtime.NumCPU() {
+		<-routineReady
+		availableRoutines++
 	}
 
 	return nil
 }
 
+func truncateRepositoriesByRegex(org, imageRegex string, truncateInactive bool, tagRegex string) error {
+	repositories, err := dockerhub.NewClient(org, "").ListRepositories()
+	if err != nil {
+		return fmt.Errorf("failed to list repositories: %w", err)
+	}
+
+	regexPattern := fmt.Sprintf(`(?i)%s`, imageRegex)
+	var repositoriesToTruncate []string
+	for _, repo := range repositories {
+		matched, _ := regexp.MatchString(regexPattern, repo.Name)
+		if matched {
+			repositoriesToTruncate = append(repositoriesToTruncate, repo.Name)
+		}
+	}
+
+	for _, image := range repositoriesToTruncate {
+		color.Blue("===> %s %s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+image))
+		if err := dockerhub.NewClient(org, "").TruncateTags(image, truncateInactive, tagRegex); err != nil {
+			color.Red("Error truncating tags for %s: %v", image, err)
+		}
+		dockerhub.BG("Done \u2714")
+	}
+
+	return nil
+}
+
+func truncateSingleRepository(org, image string, truncateInactive bool, tagRegex string) error {
+	color.Blue("===> %s %s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+image))
+	if err := dockerhub.NewClient(org, "").TruncateTags(image, truncateInactive, tagRegex); err != nil {
+		return fmt.Errorf("failed to truncate tags: %w", err)
+	}
+	dockerhub.BG("Done \u2714")
+	return nil
+}
+
 func truncater(repoCount, repositories int, org, tagRegex string, truncateInactive bool, repo *dockerhub.Repository, routineReady chan bool) {
-	color.Blue("===> %s %s %s/%s ", dockerhub.BW("Processing docker image repository"), dockerhub.BG(org+"/"+repo.Name), dockerhub.BW(repoCount+1), dockerhub.BW(repositories))
-	dockerhub.NewClient(org, "").TruncateTags(repo.Name, truncateInactive, tagRegex)
+	msg := "Processing docker image repository"
+	repoName := org + "/" + repo.Name
+	color.Blue("===> %s %s %s/%s ", dockerhub.BW(msg), dockerhub.BG(repoName), dockerhub.BW(repoCount+1), dockerhub.BW(repositories))
+	if err := dockerhub.NewClient(org, "").TruncateTags(repo.Name, truncateInactive, tagRegex); err != nil {
+		color.Red("Error truncating tags for %s: %v", repo.Name, err)
+	}
 	dockerhub.BG("Done \u2714")
 
 	routineReady <- true

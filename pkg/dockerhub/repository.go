@@ -52,19 +52,19 @@ func (c *Client) ListRepositories() (repos []*Repository, err error) {
 func (c *Client) listRepositoriesRequest(next string) (*RepositoryList, error) {
 	var url string
 	if next != "" {
-		url = fmt.Sprint(next)
+		url = next
 	} else {
 		url = fmt.Sprintf("%s/%s/?page=1&page_size=100", RepositoriesURL, c.ORG)
 	}
 
-	data, _, err := c.doRequest(http.MethodGet, url, nil)
+	data, err := c.doRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	output := &RepositoryList{}
 
-	if err = json.NewDecoder(bytes.NewReader(data)).Decode(output); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(data)).Decode(output); err != nil {
 		return nil, err
 	}
 
@@ -73,14 +73,14 @@ func (c *Client) listRepositoriesRequest(next string) (*RepositoryList, error) {
 
 // DescribeRepository print details about docker repository from docker hub
 func (c *Client) DescribeRepository(image string) (*Repository, error) {
-	data, _, err := c.doRequest(http.MethodGet, fmt.Sprintf("%s/%s/%s", RepositoriesURL, c.ORG, image), nil)
+	data, err := c.doRequest(http.MethodGet, fmt.Sprintf("%s/%s/%s", RepositoriesURL, c.ORG, image), nil)
 	if err != nil {
 		return nil, err
 	}
 
 	repo := &Repository{}
 
-	if err = json.NewDecoder(bytes.NewReader(data)).Decode(repo); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(data)).Decode(repo); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func (c *Client) DescribeRepository(image string) (*Repository, error) {
    https://hub.docker.com/v2/repositories/${ORG}/${IMAGE}/
 */
 func (c *Client) DeleteRepository(image string) error {
-	if _, _, err := c.doRequest(http.MethodDelete, fmt.Sprintf("%s/%s/%s/", RepositoriesURL, c.ORG, image), nil); err != nil {
+	if _, err := c.doRequest(http.MethodDelete, fmt.Sprintf("%s/%s/%s/", RepositoriesURL, c.ORG, image), nil); err != nil {
 		color.Red("Error while deleting docker image: %s", err)
 	}
 

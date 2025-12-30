@@ -60,17 +60,23 @@ func (c *Client) RenewDockerImage(image string) error {
 // helper function to create the `docker pull` command.
 func commandPull(imageReference string) {
 	color.Green("	<== Pulling from dockerHub %s ", BW(imageReference))
-	exec.Command("docker", "pull", imageReference).Run()
+	if err := exec.Command("docker", "pull", imageReference).Run(); err != nil {
+		color.Red("Error pulling %s: %v", imageReference, err)
+	}
 }
 
 // helper function to create the `docker push` command.
 func commandPush(imageReference string) {
 	color.Green("	==> Pushing to dockerHub %s ", BW(imageReference))
-	exec.Command("docker", "push", imageReference).Run()
+	if err := exec.Command("docker", "push", imageReference).Run(); err != nil {
+		color.Red("Error pushing %s: %v", imageReference, err)
+	}
 }
 
 // helper function to create the `docker image rm` command.
 func commandRmi(imageReference string) {
 	color.Red("	Removing from localhost %s ", BW(imageReference))
-	exec.Command("docker", "image", "rm", imageReference).Run()
+	if err := exec.Command("docker", "image", "rm", imageReference).Run(); err != nil {
+		color.Red("Error removing %s: %v", imageReference, err)
+	}
 }

@@ -98,16 +98,16 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 		<-limiter
 		if availableRoutines == 0 {
 			<-routineReady
-			availableRoutines = availableRoutines + 1
+			availableRoutines++
 		}
-		availableRoutines = availableRoutines - 1
+		availableRoutines--
 
 		go lister(org, repo, chanRes, routineReady)
 	}
 
 	for availableRoutines < runtime.NumCPU() {
 		<-routineReady
-		availableRoutines = availableRoutines + 1
+		availableRoutines++
 	}
 
 	close(chanRes)
@@ -121,19 +121,20 @@ func listDockerhubRepos(flags *pflag.FlagSet, options *listRepoOptions) {
 
 	for repoCount, info := range ret {
 		if options.expand {
+			repoName := dockerhub.BW(info.repoName)
+			format := "| Image %-5d | %-55s | %-11d | %-12.2f | %-21s | %s\n"
 			if info.tagsCount == 0 {
-				fmt.Printf("| Image %-5d | %-55s | %-11d | %-12.2f | %-21s | %s\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BR(info.tagsCount), info.lastUpdated)
+				fmt.Printf(format, repoCount+1, repoName, info.repoPullCount, info.avgSize, dockerhub.BR(info.tagsCount), info.lastUpdated)
 			} else if info.tagsCount >= 50 {
-				fmt.Printf("| Image %-5d | %-55s | %-11d | %-12.2f | %-21s | %s\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BY(info.tagsCount), info.lastUpdated)
+				fmt.Printf(format, repoCount+1, repoName, info.repoPullCount, info.avgSize, dockerhub.BY(info.tagsCount), info.lastUpdated)
 			} else {
-				fmt.Printf("| Image %-5d | %-55s | %-11d | %-12.2f | %-21s | %s\n", repoCount+1, dockerhub.BW(info.repoName), info.repoPullCount, info.avgSize, dockerhub.BW(info.tagsCount), info.lastUpdated)
+				fmt.Printf(format, repoCount+1, repoName, info.repoPullCount, info.avgSize, dockerhub.BW(info.tagsCount), info.lastUpdated)
 			}
 		}
 		if !options.expand {
 			fmt.Printf("| Image %-5d | %-55s | %d\n", repoCount+1, info.repoName, info.tagsCount)
 		}
 	}
-
 }
 
 func lister(org string, repo *dockerhub.Repository, chanRes chan listResult, routineReady chan bool) {

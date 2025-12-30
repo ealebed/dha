@@ -54,19 +54,19 @@ func (c *Client) ListTags(image string) ([]*Tag, error) {
 func (c *Client) listTagsRequest(image, next string) (*TagList, error) {
 	var url string
 	if next != "" {
-		url = fmt.Sprint(next)
+		url = next
 	} else {
 		url = fmt.Sprintf("%s/%s/%s/tags/?page_size=100", RepositoriesURL, c.ORG, image)
 	}
 
-	data, _, err := c.doRequest(http.MethodGet, url, nil)
+	data, err := c.doRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	output := &TagList{}
 
-	if err = json.NewDecoder(bytes.NewReader(data)).Decode(output); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(data)).Decode(output); err != nil {
 		return nil, err
 	}
 
@@ -77,14 +77,14 @@ func (c *Client) listTagsRequest(image, next string) (*TagList, error) {
 func (c *Client) GetTagsCount(image string) (int, error) {
 	url := fmt.Sprintf("%s/%s/%s/tags/?page_size=100", RepositoriesURL, c.ORG, image)
 
-	data, _, err := c.doRequest(http.MethodGet, url, nil)
+	data, err := c.doRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return -1, err
 	}
 
 	output := &TagList{}
 
-	if err = json.NewDecoder(bytes.NewReader(data)).Decode(output); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(data)).Decode(output); err != nil {
 		return -1, err
 	}
 
@@ -121,9 +121,10 @@ func (c *Client) GetAvgTagsSize(image string) (float64, error) {
    -H "Authorization: JWT ${TOKEN}" \
    -X DELETE https://hub.docker.com/v2/repositories/${ORG}/${IMAGE}/tags/${TAG}/
 */
-func (c *Client) deleteDockerImageTag(image string, tag string) error {
-	if _, _, err := c.doRequest(http.MethodDelete, fmt.Sprintf("%s/%s/%s/tags/%s/", RepositoriesURL, c.ORG, image, tag), nil); err != nil {
+func (c *Client) deleteDockerImageTag(image, tag string) error {
+	if _, err := c.doRequest(http.MethodDelete, fmt.Sprintf("%s/%s/%s/tags/%s/", RepositoriesURL, c.ORG, image, tag), nil); err != nil {
 		color.Red("Error while deleting docker image tag: %s", err)
+		return err
 	}
 
 	return nil
