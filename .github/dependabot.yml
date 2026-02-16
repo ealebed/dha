@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    assignees:
+      - "ealebed"
     # Optional: Add commit message prefix for Go module updates
     # commit-message:
     #   prefix: "deps"
@@ -13,6 +15,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    assignees:
+      - "ealebed"
     # Optional: Add commit message prefix for GitHub Actions updates
     # commit-message:
     #   prefix: "ci"
