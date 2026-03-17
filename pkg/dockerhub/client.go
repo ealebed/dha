@@ -100,7 +100,8 @@ func (c *Client) GetAuthToken() (string, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.Do(req)
+	// URL is fixed (BaseURL + path), not user-controlled
+	resp, err := c.Do(req) // #nosec G704
 	if err != nil {
 		return "", err
 	}
