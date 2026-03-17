@@ -60,7 +60,7 @@ func (c *Client) RenewDockerImage(image string) error {
 // helper function to create the `docker pull` command.
 func commandPull(imageReference string) {
 	color.Green("	<== Pulling from dockerHub %s ", BW(imageReference))
-	if err := exec.Command("docker", "pull", imageReference).Run(); err != nil {
+	if err := exec.Command("docker", "pull", imageReference).Run(); err != nil { // #nosec G204 -- imageReference is from API (org/image:tag), not raw input
 		color.Red("Error pulling %s: %v", imageReference, err)
 	}
 }
@@ -68,7 +68,7 @@ func commandPull(imageReference string) {
 // helper function to create the `docker push` command.
 func commandPush(imageReference string) {
 	color.Green("	==> Pushing to dockerHub %s ", BW(imageReference))
-	if err := exec.Command("docker", "push", imageReference).Run(); err != nil {
+	if err := exec.Command("docker", "push", imageReference).Run(); err != nil { // #nosec G204 -- imageReference is from API (org/image:tag), not raw input
 		color.Red("Error pushing %s: %v", imageReference, err)
 	}
 }
@@ -76,7 +76,7 @@ func commandPush(imageReference string) {
 // helper function to create the `docker image rm` command.
 func commandRmi(imageReference string) {
 	color.Red("	Removing from localhost %s ", BW(imageReference))
-	if err := exec.Command("docker", "image", "rm", imageReference).Run(); err != nil {
+	if err := exec.Command("docker", "image", "rm", imageReference).Run(); err != nil { // #nosec G204 -- imageReference is from API (org/image:tag), not raw input
 		color.Red("Error removing %s: %v", imageReference, err)
 	}
 }
