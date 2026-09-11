@@ -6,10 +6,8 @@ updates:
       interval: "daily"
     assignees:
       - "ealebed"
-    # Optional: Add commit message prefix for Go module updates
-    # commit-message:
-    #   prefix: "deps"
-    #   include: "scope"
+    labels:
+      - "dependencies"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -17,19 +15,5 @@ updates:
       interval: "daily"
     assignees:
       - "ealebed"
-    # Optional: Add commit message prefix for GitHub Actions updates
-    # commit-message:
-    #   prefix: "ci"
-    #   include: "scope"
-
-  # Optional: Uncomment if your project uses Docker
-  # - package-ecosystem: "docker"
-  #   directory: "/"
-  #   schedule:
-  #     interval: "daily"
-
-  # Optional: Uncomment if your project uses Terraform modules
-  # - package-ecosystem: "terraform"
-  #   directory: "/"
-  #   schedule:
-  #     interval: "daily"
+    labels:
+      - "dependencies"

@@ -28,6 +28,9 @@ export DOCKERHUB_PASSWORD=
 dha -h
 ```
 
+## Dependabot automation
+Minor and patch Dependabot PRs are approved and squash-merged by a GitHub App after required CI passes. See [Dependabot automation](./docs/dependabot-automation.md).
+
 ---
 
 ## Syntax
